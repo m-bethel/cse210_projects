@@ -42,6 +42,12 @@ class Journal
     {
         Console.Write("Enter filename to save: ");
         string filename = Console.ReadLine();
+        foreach (string line in entries)
+        {
+            string[] parts = line.Split(' ');
+            string csvLine = string.Join(',', parts);
+            Console.WriteLine(csvLine);
+        }
         System.IO.File.WriteAllLines(filename, entries);
         Console.WriteLine("Entries saved to file.");
     }
