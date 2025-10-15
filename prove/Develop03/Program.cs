@@ -4,6 +4,24 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello Develop03 World!");
+        bool running = true;
+        while (running)
+        {
+            string choice = Console.ReadLine().ToLower();
+            switch (choice)
+            {
+                case " ":
+                    running = false;
+                    break;
+
+                case "quit":
+                    running = false;
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid option, please try again.");
+                    break;
+            }
+        }
     }
 }
