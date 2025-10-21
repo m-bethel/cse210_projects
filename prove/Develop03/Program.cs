@@ -3,18 +3,22 @@ using System;
 class Program
 {
     static void Main(string[] args)
-    {
+    {   
+        Menu menu = new Menu();
         bool running = true;
         while (running)
         {
-            string choice = Console.ReadLine().ToLower();
+            menu.DisplayMenu();
+            string choice = Console.ReadLine();
             switch (choice)
             {
-                case " ":
-                    running = false;
+                case "1":
+                    Scripture scripture = new Scripture();
+                    scripture.SelectScripture();
                     break;
 
-                case "quit":
+                case "2":
+                Console.WriteLine("Exiting the program. Goodbye!");
                     running = false;
                     break;
 
