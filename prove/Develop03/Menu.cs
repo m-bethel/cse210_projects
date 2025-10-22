@@ -8,6 +8,6 @@ class Menu
         Console.WriteLine("Menu Options:");
         Console.WriteLine("1. Choose Scripture");
         Console.WriteLine("2. Quit");
-        Console.Write("\nSelect a choice from the menu: ");
+        Console.Write("\nSelect a choice from the menu or type 'quit' to quit: ");
     }
 }

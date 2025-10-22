@@ -9,7 +9,7 @@ class Program
         while (running)
         {
             menu.DisplayMenu();
-            string choice = Console.ReadLine();
+            string choice = Console.ReadLine().ToLower();
             switch (choice)
             {
                 case "1":
@@ -18,6 +18,11 @@ class Program
                     break;
 
                 case "2":
+                Console.WriteLine("Exiting the program. Goodbye!");
+                    running = false;
+                    break;
+                
+                case "quit":
                 Console.WriteLine("Exiting the program. Goodbye!");
                     running = false;
                     break;

@@ -1,39 +1,39 @@
 class Journal
 {
-    private List<string> entries;
+    private List<Entry> _entries;
 
     public Journal()
     {
-        entries = new List<string>();
+        _entries = new List<Entry>();
     }
 
     public void WriteEntry()
     {
-
         Console.Write("Prompt: ");
         Prompt prompt = new Prompt();
-
         string givenPrompt = prompt.GetRandomPrompt();
         Console.WriteLine(givenPrompt);
 
-        string dt = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss: ");
-        string entry = dt + "Prompt: " + givenPrompt + " " + Console.ReadLine();
-        entries.Add(entry);
+        Entry entryObj = new Entry();
+        entryObj._givenPrompt = givenPrompt;
+        entryObj._userEntry = Console.ReadLine();
+        
+        _entries.Add(entryObj);
         Console.WriteLine("Entry added.");
     }
 
     public void DisplayEntries()
     {
-        if (entries.Count == 0)
+        if (_entries.Count == 0)
         {
             Console.WriteLine("No entries to display.");
             return;
         }
         Console.WriteLine("===========================");
         Console.WriteLine("Journal Entries:");
-        foreach (string entry in entries)
+        foreach (Entry entry in _entries)
         {
-            Console.WriteLine($"- {entry}");
+            Console.WriteLine($"- {entry.EntryString()}");
             Console.WriteLine("--------------------");
         }
     }
@@ -42,13 +42,17 @@ class Journal
     {
         Console.Write("Enter filename to save: ");
         string filename = Console.ReadLine();
-        foreach (string line in entries)
+        string[] lines = new string[_entries.Count];
+        int x = 0; //index for lines array
+        foreach (Entry i in _entries)
         {
-            string[] parts = line.Split(' ');
-            string csvLine = string.Join(',', parts);
+            string csvLine = string.Join('|', [i._dt, i._givenPrompt, i._userEntry]);
+
             Console.WriteLine(csvLine);
+            lines[x] = csvLine;
+            x += 1;
         }
-        System.IO.File.WriteAllLines(filename, entries);
+        System.IO.File.WriteAllLines(filename, lines);
         Console.WriteLine("Entries saved to file.");
     }
 
@@ -56,9 +60,24 @@ class Journal
     {
         Console.Write("Enter filename to load: ");
         string filename = Console.ReadLine();
+        List<string> entries = new List<string>();
         if (System.IO.File.Exists(filename))
         {
+            _entries = new List<Entry>();
             entries = System.IO.File.ReadAllLines(filename).ToList();
+            foreach(string i in entries)
+            {
+                string[] parts = i.Split('|');
+                Entry entryObj = new Entry();
+                entryObj._dt = parts[0];
+                entryObj._givenPrompt = parts[1];
+                entryObj._userEntry = parts[2];
+
+                _entries.Add(entryObj);
+
+
+            }
+
             Console.WriteLine("Entries loaded from file.");
         }
         else

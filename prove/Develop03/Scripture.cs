@@ -57,6 +57,13 @@ class Scripture
         Memorize();
     }
 
+    private int NumbersOfWordsToHide()
+    {
+        Console.Write("How many words would you like to hide each time? ");
+        string input = Console.ReadLine();
+        int result = int.Parse(input);
+        return result;
+    } 
     private void LoadWords(string text)
     {
         _words.Clear();
@@ -67,18 +74,18 @@ class Scripture
             _words.Add(new Word(word));
         }
     }
-    
+
 
     private void Memorize()
     {
         bool running = true;
-
+        int x = NumbersOfWordsToHide();
         while (running && !_words.All(w => w.IsHidden()))
         {
             Console.Clear();
-            
+
             Console.WriteLine("\nPress Enter to hide more words or type 'quit' to exit:");
-            
+
             foreach (Word word in _words)
             {
                 word.DisplayText();
@@ -90,14 +97,14 @@ class Scripture
                 break;
             }
 
-            
+
             string input = Console.ReadLine().ToLower(); ;
-            if (input == "quit")
+            if (input == "quit" || input == "2")
             {
                 break;
             }
 
-            HideRandomWords(3);
+            HideRandomWords(x);
         }
     }
 
@@ -113,14 +120,4 @@ class Scripture
             visibleWords.RemoveAt(index);
         }
     }
-        private void DisplayScripture()
-        {
-            Console.Clear();
-            Console.WriteLine(_reference.GetReferenceString() + "\n");
-
-            foreach (Word word in _words)
-            {
-                word.DisplayText();
-            }
-        }
 }
