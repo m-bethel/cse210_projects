@@ -74,8 +74,6 @@ class Journal
                 entryObj._userEntry = parts[2];
 
                 _entries.Add(entryObj);
-
-
             }
 
             Console.WriteLine("Entries loaded from file.");
