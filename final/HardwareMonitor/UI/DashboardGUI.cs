@@ -11,7 +11,7 @@ namespace HardwareMonitor.UI
     public class DashboardGUI : Form
     {
         private SystemMonitor monitor; 
-        private TabControl mainTabControl;
+        private TabControl mainTabControl = null!;
         private Dictionary<string, Panel> componentPanels = new Dictionary<string, Panel>();
 
         public DashboardGUI()
@@ -30,39 +30,39 @@ namespace HardwareMonitor.UI
         }
 
         private void InitializeComponents()
-{
-    // Get actual CPU info
-    string cpuName = GetCPUName();
-    int coreCount = Environment.ProcessorCount;
-    monitor.AddComponent(new CPU(cpuName, cpuName, coreCount));
-    
-    // Get actual GPU info
-    var gpuInfo = GetGPUInfo();
-    monitor.AddComponent(new GPU(gpuInfo.name, gpuInfo.name, gpuInfo.memory));
-    
-    // Get actual SSD info
-    var ssdInfo = GetSSDInfo();
-    monitor.AddComponent(new SSD(ssdInfo.name, ssdInfo.model, ssdInfo.capacity));
-    
-    // Get actual RAM info
-    var ramInfo = GetRAMInfo();
-    monitor.AddComponent(new RAM("System RAM", ramInfo.type, ramInfo.totalGB, ramInfo.type, ramInfo.speed));
-    // Update the RAM frequency after creation
-    monitor.AddComponent(ram);
-    
-    // Get actual WiFi info
-    var wifiInfo = GetWiFiInfo();
-    monitor.AddComponent(new WiFi(wifiInfo.name, wifiInfo.model));
-    
-    monitor.AddComponent(new Fan("CPU Fan", "Stock Cooler", "CPU"));
-    
-    mainTabControl = new TabControl { Dock = DockStyle.Fill };
-    
-    foreach (var component in monitor.GetAllComponents())
-        CreateTabForComponent(component);
-    
-    Controls.Add(mainTabControl);
-}
+        {
+            // Get actual CPU info
+            string cpuName = GetCPUName();
+            int coreCount = Environment.ProcessorCount;
+            monitor.AddComponent(new CPU(cpuName, cpuName, coreCount));
+
+            // Get actual GPU info
+            (string name, int memory) gpuInfo = GetGPUInfo();
+            monitor.AddComponent(new GPU(gpuInfo.name, gpuInfo.name, gpuInfo.memory));
+
+            // Get actual SSD info
+            (string name, string model, long capacity) ssdInfo = GetSSDInfo();
+            monitor.AddComponent(new SSD(ssdInfo.name, ssdInfo.model, ssdInfo.capacity));
+
+            // Get actual RAM info
+            (long totalGB, int speed, string type) ramInfo = GetRAMInfo();
+            monitor.AddComponent(new RAM("System RAM", ramInfo.type, ramInfo.totalGB, ramInfo.type, ramInfo.speed));
+
+            // Get actual WiFi info
+            (string name, string model) wifiInfo = GetWiFiInfo();
+            monitor.AddComponent(new WiFi(wifiInfo.name, wifiInfo.model));
+
+            monitor.AddComponent(new Fan("CPU Fan", "Stock Cooler", "CPU"));
+
+            mainTabControl = new TabControl { Dock = DockStyle.Fill };
+
+            foreach (HardwareComponent component in monitor.GetAllComponents())
+            {
+                CreateTabForComponent(component);
+            }
+
+            Controls.Add(mainTabControl);
+        }
 
         private string GetCPUName()
         {
@@ -98,59 +98,65 @@ namespace HardwareMonitor.UI
                     }
                 }
             }
-            catch { }
+            catch 
+            { 
+            }
             return ("Unknown GPU", 4);
         }
         
         private (long totalGB, int speed, string type) GetRAMInfo()
-{
-    long totalBytes = 0;
-    int speed = 0;
-    string memoryType = "Unknown";
-    
-    try
-    {
-        // Get total physical memory
-        using (var searcher = new System.Management.ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem"))
         {
-            foreach (var obj in searcher.Get())
+            long totalBytes = 0;
+            int speed = 0;
+            string memoryType = "Unknown";
+
+            try
             {
-                totalBytes = Convert.ToInt64(obj["TotalPhysicalMemory"]);
-            }
-        }
-        
-        // Get RAM speed and type
-        using (var searcher = new System.Management.ManagementObjectSearcher("SELECT Speed, MemoryType, SMBIOSMemoryType FROM Win32_PhysicalMemory"))
-        {
-            foreach (var obj in searcher.Get())
-            {
-                // Get speed (in MHz)
-                if (obj["Speed"] != null)
+                // Get total physical memory
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem"))
                 {
-                    speed = Convert.ToInt32(obj["Speed"]);
-                }
-                
-                // Determine memory type
-                if (obj["SMBIOSMemoryType"] != null)
-                {
-                    int typeCode = Convert.ToInt32(obj["SMBIOSMemoryType"]);
-                    memoryType = typeCode switch
+                    foreach (ManagementObject obj in searcher.Get())
                     {
-                        20 => "DDR",
-                        21 => "DDR2",
-                        24 => "DDR3",
-                        26 => "DDR4",
-                        34 => "DDR5",
-                        _ => $"Type {typeCode}"
-                    };
+                        totalBytes = Convert.ToInt64(obj["TotalPhysicalMemory"]);
+                    }
                 }
-                
-                break; // Just get info from first stick
+
+                // Get RAM speed and type
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Speed, MemoryType, SMBIOSMemoryType FROM Win32_PhysicalMemory"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        if (obj["Speed"] != null)
+                        {
+                            speed = Convert.ToInt32(obj["Speed"]);
+                        }
+
+                        if (obj["SMBIOSMemoryType"] != null)
+                        {
+                            int typeCode = Convert.ToInt32(obj["SMBIOSMemoryType"]);
+                            memoryType = typeCode switch
+                            {
+                                20 => "DDR",
+                                21 => "DDR2",
+                                24 => "DDR3",
+                                26 => "DDR4",
+                                34 => "DDR5",
+                                _ => $"Type {typeCode}"
+                            };
+                        }
+
+                        break;
+                    }
+                }
             }
+            catch 
+            { 
+            }
+
+            long totalGB = totalBytes / (1024 * 1024 * 1024);
+            return (totalGB > 0 ? totalGB : 16, speed > 0 ? speed : 2400, memoryType != "Unknown" ? memoryType : "DDR4");
         }
-    }
-    catch { }
-}
+
         
         private (string name, string model, long capacity) GetSSDInfo()
         {
@@ -171,42 +177,47 @@ namespace HardwareMonitor.UI
                     }
                 }
             }
-            catch { }
+            catch 
+            { 
+            }
             return ("Unknown SSD", "Generic SSD", 512);
         }
+        
         private (string name, string model) GetWiFiInfo()
-{
-    try
-    {
-        using (var searcher = new System.Management.ManagementObjectSearcher("SELECT Name, Description FROM Win32_NetworkAdapter WHERE NetConnectionStatus=2 AND PhysicalAdapter=True"))
         {
-            foreach (var obj in searcher.Get())
+            try
             {
-                string name = obj["Name"]?.ToString() ?? "";
-                string description = obj["Description"]?.ToString() ?? "";
-                
-                // Prefer WiFi/Wireless adapters
-                if (name.Contains("Wi-Fi", StringComparison.OrdinalIgnoreCase) || 
-                    name.Contains("Wireless", StringComparison.OrdinalIgnoreCase) ||
-                    description.Contains("802.11", StringComparison.OrdinalIgnoreCase))
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Name, Description FROM Win32_NetworkAdapter WHERE NetConnectionStatus=2 AND PhysicalAdapter=True"))
                 {
-                    return (name, description);
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        string name = obj["Name"]?.ToString() ?? "";
+                        string description = obj["Description"]?.ToString() ?? "";
+                        
+                        // Prefer WiFi/Wireless adapters
+                        if (name.Contains("Wi-Fi", StringComparison.OrdinalIgnoreCase) || 
+                            name.Contains("Wireless", StringComparison.OrdinalIgnoreCase) ||
+                            description.Contains("802.11", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return (name, description);
+                        }
+                    }
+                    
+                    // If no WiFi found, return first network adapter
+                    searcher.Query.QueryString = "SELECT Name, Description FROM Win32_NetworkAdapter WHERE NetConnectionStatus=2 AND PhysicalAdapter=True";
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        string name = obj["Name"]?.ToString() ?? "";
+                        string description = obj["Description"]?.ToString() ?? "";
+                        return (name, description);
+                    }
                 }
             }
-            
-            // If no WiFi found, return first network adapter
-            searcher.Query.QueryString = "SELECT Name, Description FROM Win32_NetworkAdapter WHERE NetConnectionStatus=2 AND PhysicalAdapter=True";
-            foreach (var obj in searcher.Get())
-            {
-                string name = obj["Name"]?.ToString() ?? "";
-                string description = obj["Description"]?.ToString() ?? "";
-                return (name, description);
+            catch 
+            { 
             }
+            return ("Unknown WiFi", "Generic WiFi Adapter");
         }
-    }
-    catch { }
-    return ("Unknown WiFi", "Generic WiFi Adapter");
-}
         
         private void CreateTabForComponent(HardwareComponent component)
         {
